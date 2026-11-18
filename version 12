@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bourque Yard Training</title>
+  <style>
+    :root {
+      --blue: #18384d;
+      --red: #b91c23;
+      --yellow: #f5c542;
+      --green: #218838;
+      --gray: #edf1f4;
+      --border: #cbd3da;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: #20262b;
+      background: #e9eef2;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 76px;
+      padding: 12px 20px;
+      color: white;
+      background: var(--blue);
+      border-bottom: 5px solid var(--red);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(20px, 3vw, 34px);
+    }
+
+    main {
+      max-width: 1500px;
+      margin: 20px auto;
+      padding: 0 16px 40px;
+    }
+
+    .toolbar,
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .toolbar {
+      margin-bottom: 14px;
+    }
+
+    .tabs {
+      margin-bottom: 14px;
+    }
+
+    button {
+      min-height: 44px;
+      padding: 9px 14px;
+      border: 1px solid #9aa5ac;
+      border-radius: 6px;
+      background: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover { background: #edf2f5; }
+
+    button.primary {
+      color: white;
+      border-color: var(--red);
+      background: var(--red);
+    }
+
+    button.correct {
+      color: white;
+      border-color: var(--green);
+      background: var(--green);
+    }
+
+    .tab { flex: 1 1 180px; }
+
+    .tab.active {
+      color: white;
+      border-color: var(--blue);
+      background: var(--blue);
+    }
+
+    .panel {
+      display: none;
+      min-height: 520px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .panel.active { display: block; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) 360px;
+      gap: 18px;
+    }
+
+    .diagram {
+      overflow: auto;
+      border: 1px solid var(--border);
+      background: white;
+    }
+
+    .diagram img {
+      display: block;
+      width: 100%;
+      max-width: 1050px;
+      height: auto;
+      margin: auto;
+    }
+
+    .sidebar {
+      min-width: 0;
+    }
+
+    .card,
+    .score,
+    .question,
+    .scenario {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #f4f6f8;
+    }
+
+    .card { padding: 16px; }
+
+    .score {
+      position: sticky;
+      top: 94px;
+      z-index: 5;
+      margin-bottom: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .progress-track {
+      height: 12px;
+      margin: 8px 0;
+      overflow: hidden;
+      border-radius: 20px;
+      background: #dfe5e8;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: var(--green);
+      transition: width 0.25s ease;
+    }
+
+    .question {
+      margin-top: 12px;
+      padding: 14px;
+      background: white;
+    }
+
+    .answers {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .answer {
+      width: 100%;
+      text-align: left;
+    }
+
+    .answer.selected { border-width: 3px; }
+
+    .answer.correct-answer {
+      color: white;
+      border-color: var(--green);
+      background: var(--green);
+    }
+
+    .answer.wrong-answer {
+      color: white;
+      border-color: var(--red);
+      background: var(--red);
+    }
+
+    .feedback {
+      min-height: 24px;
+      margin-top: 10px;
+      font-weight: 700;
+    }
+
+    .feedback.success { color: var(--green); }
+
+    .feedback.error { color: var(--red); }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .scenario {
+      padding: 14px;
+    }
+
+    .scenario-options {
+      display: grid;
+      gap: 8px;
+    }
+
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .checklist label {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #f4f6f8;
+    }
+
+    .checklist input {
+      width: 20px;
+      height: 20px;
+    }
+
+    .print-only { display: none; }
+
+    @media (max-width: 950px) {
+      .layout { grid-template-columns: 1fr; }
+
+      .score {
+        position: static;
+      }
+    }
+
+    @media print {
+      header,
+      .toolbar,
+      .tabs,
+      button,
+      .answers {
+        display: none !important;
+      }
+
+      body { background: white; }
+
+      main {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .panel {
+        display: block !important;
+        min-height: 0;
+        margin-bottom: 18px;
+        border: 0;
+        box-shadow: none;
+        page-break-after: always;
+      }
+
+      .layout { grid-template-columns: 1fr; }
+
+      .diagram img {
+        max-height: 8in;
+        object-fit: contain;
+      }
+
+      .print-only { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Bourque Yard Training</h1>
+    <strong id="headerProgress">0% complete</strong>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <button type="button" id="resetButton">Reset Progress</button>
+      <button type="button" class="primary" id="printButton">Print / Save PDF</button>
+    </div>
+
+    <nav class="tabs" aria-label="Training sections">
+      <button class="tab active" data-panel="meg">MEG Yard</button>
+      <button class="tab" data-panel="styrene">Styrene/Benzene Yard</button>
+      <button class="tab" data-panel="practice">Scenario Practice</button>
+      <button class="tab" data-panel="checklist">Final Checklist</button>
+    </nav>
+
+    <section class="panel active" id="meg">
+      <div class="layout">
+        <div class="diagram">
+          <img
+            src="https://raw.githubusercontent.com/jjjjjjooooosssseeeee/Bourque/main/Designer%20(4).png"
+            alt="MEG Distribution Yard"
+          >
+        </div>
+
+        <aside class="sidebar">
+          <div class="score">
+            <strong>MEG Lesson Progress</strong>
+            <div class="progress-track">
+              <div class="progress-bar" data-progress="meg"></div>
+            </div>
+            <div data-score="meg">0 / 3 answered</div>
+          </div>
+
+          <article class="card">
+            <h2>MEG Distribution Yard</h2>
+            <h3>Track and route awareness</h3>
+            <ul>
+              <li>Review tracks 1 through 7 and 1a, 2b through 6b.</li>
+              <li>Confirm the applicable lead and switch position.</li>
+              <li>Use the diagram together with the current controlled instructions.</li>
+            </ul>
+
+            <h3>Movement precautions</h3>
+            <ul>
+              <li>Stop for any derailed or uncertain condition.</li>
+              <li>Protect the area and obtain required authority.</li>
+              <li>Do not clear an indicator or route based on assumption.</li>
+            </ul>
+
+            <div class="question" data-question="meg-1">
+              <strong>1. Before entering an unfamiliar yard lead, you should:</strong>
+              <div class="answers">
+                <button class="answer" data-answer="wrong">Proceed at restricted speed</button>
+                <button class="answer" data-answer="correct">Verify the track designation and switch position</button>
+                <button class="answer" data-answer="wrong">Follow the movement ahead</button>
+              </div>
+              <div class="feedback"></div>
+            </div>
+
+            <div class="question" data-question="meg-2">
+              <strong>2. When may movement continue after a derail indication?</strong>
+              <div class="answers">
+                <button class="answer" data-answer="wrong">After another employee checks it</button>
+                <button class="answer" data-answer="wrong">During daylight only</button>
+                <button class="answer" data-answer="correct">Never until the condition is corrected and authorized</button>
+              </div>
+              <div class="feedback"></div>
+            </div>
+
+            <div class="question" data-question="meg-3">
+              <strong>3. What is the first priority at a crossing or switch?</strong>
+              <div class="answers">
+                <button class="answer" data-answer="correct">Prevent an unsafe or unauthorized movement</button>
+                <button class="answer" data-answer="wrong">Reduce operating delay</button>
+                <button class="answer" data-answer="wrong">Repeat the previous shift's arrangement</button>
+              </div>
+              <div class="feedback"></div>
+            </div>
+          </article>
+        </aside>
+      </div>
+    </section>
+
+    <section class="panel" id="styrene">
+      <div class="layout">
+        <div class="diagram">
+          <img
+            src="https://raw.githubusercontent.com/jjjjjjooooosssseeeee/Bourque/main/Designer%20(5).png"
+            alt="Styrene/Benzene Distribution Yard"
+          >
+        </div>
+
+        <aside class="sidebar">
+          <div class="score">
+            <strong>Styrene/Benzene Progress</strong>
+            <div class="progress-track">
+              <div class="progress-bar" data-progress="styrene"></div>
+            </div>
+            <div data-score="styrene">0 / 3 answered</div>
+          </div>
+
+          <article class="card">
+            <h2>Styrene/Benzene Distribution Yard</h2>
+            <h3>Route awareness</h3>
+            <ul>
+              <li>Recognize the main line, SWYE, NWYE, and lead relationships.</li>
+              <li>Check fence boundaries and authorized gate locations.</li>
+              <li>Identify tracks 1 through 8 before movement.</li>
+            </ul>
+
+            <h3>Protected areas</h3>
+            <ul>
+              <li>Confirm emergency gate and normal gate status.</li>
+              <li>Protect personnel and equipment near the office and loading area.</li>
+              <li>Do not enter or open protected areas without authorization.</li>
+            </ul>
+
+            <div class="question" data-question="styrene-1">
+              <strong>1. Before crossing or opening a yard gate, verify:</strong>
+              <div class="answers">
+                <button class="answer" data-answer="wrong">That nearby traffic is stopped</button>
+                <button class="answer" data-answer="correct">Authorization and safe conditions</button>
+                <button class="answer" data-answer="wrong">Only the gate color</button>
+              </div>
+              <div class="feedback"></div>
+            </div>
+
+            <div class="question" data-question="styrene-2">
+              <strong>2. Around the office area, add attention to:</strong>
+              <div class="answers">
+                <button class="answer" data-answer="correct">Personnel, protected areas, and vehicle or rail movement</button>
+                <button class="answer" data-answer="wrong">Main-line speed only</button>
+                <button class="answer" data-answer="wrong">Catalyst expansion alone</button>
+              </div>
+              <div class="feedback"></div>
+            </div>
+
+            <div class="question" data-question="styrene-3">
+              <strong>3. If a fence or gate condition is uncertain:</strong>
+              <div class="answers">
+                <button class="answer" data-answer="wrong">Proceed if the area appears empty</button>
+                <button class="answer" data-answer="correct">Stop and obtain verification</button>
+                <button class="answer" data-answer="wrong">Use the closest crossing</button>
+              </div>
+              <div class="feedback"></div>
+            </div>
+          </article>
+        </aside>
+      </div>
+    </section>
+
+    <section class="panel" id="practice">
+      <article class="card">
+        <h2>Scenario Practice</h2>
+
+        <div class="scenario-grid">
+          <div class="scenario">
+            <h3>Unknown switch position</h3>
+            <p>The switch position cannot be visually confirmed.</p>
+            <div class="scenario-options">
+              <button class="scenario-answer" data-result="wrong">Proceed slowly</button>
+              <button class="scenario-answer" data-result="correct">Stop and verify the route</button>
+              <button class="scenario-answer" data-result="wrong">Use yesterday's arrangement</button>
+            </div>
+            <div class="scenario-feedback feedback"></div>
+          </div>
+
+          <div class="scenario">
+            <h3>Derail indication appears</h3>
+            <p>An abnormal derailed condition is observed near the route.</p>
+            <div class="scenario-options">
+              <button class="scenario-answer" data-result="wrong">Continue if no damage is visible</button>
+              <button class="scenario-answer" data-result="correct">Stop, protect, and report</button>
+              <button class="scenario-answer" data-result="wrong">Sound the horn and proceed</button>
+            </div>
+            <div class="scenario-feedback feedback"></div>
+          </div>
+
+          <div class="scenario">
+            <h3>Gate conflict</h3>
+            <p>A gate is open, but personnel authorization is unclear.</p>
+            <div class="scenario-options">
+              <button class="scenario-answer" data-result="correct">Do not enter until safety is confirmed</button>
+              <button class="scenario-answer" data-result="wrong">Enter because the gate is open</button>
+              <button class="scenario-answer" data-result="wrong">Cross slowly</button>
+            </div>
+            <div class="scenario-feedback feedback"></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel" id="checklist">
+      <article class="card">
+        <h2>Final Yard Safety Checklist</h2>
+
+        <div class="checklist">
+          <label><input type="checkbox" class="final-check"> I identified the correct yard diagram.</label>
+          <label><input type="checkbox" class="final-check"> I confirmed the applicable track and lead.</label>
+          <label><input type="checkbox" class="final-check"> I verified switch and crossing positions.</label>
+          <label><input type="checkbox" class="final-check"> I considered gates and fences.</label>
+          <label><input type="checkbox" class="final-check"> I identified personnel and equipment risks.</label>
+          <label><input type="checkbox" class="final-check"> I know the stop and notification procedure.</label>
+          <label><input type="checkbox" class="final-check"> I will not move with unresolved uncertainty.</label>
+        </div>
+
+        <p class="feedback" id="checklistStatus">
+          Complete all seven items to finish.
+        </p>
+
+        <button type="button" class="primary" id="finishButton" disabled>
+          Finish Training
+        </button>
+
+        <p class="print-only" id="completionMessage"></p>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      meg: new Set(),
+      styrene: new Set()
+    };
+
+    function saveState() {
+      localStorage.setItem("bourqueTrainingState", JSON.stringify({
+        meg: [...state.meg],
+        styrene: [...state.styrene]
+      }));
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("bourqueTrainingState"));
+        if (!saved) return;
+
+        state.meg = new Set(saved.meg || []);
+        state.styrene = new Set(saved.styrene || []);
+      } catch (error) {
+        console.warn("Saved progress could not be loaded.", error);
+      }
+    }
+
+    function updateProgress() {
+      const megCount = state.meg.size;
+      const styreneCount = state.styrene.size;
+
+      document.querySelector('[data-progress="meg"]').style.width =
+        `${megCount / 3 * 100}%`;
+      document.querySelector('[data-progress="styrene"]').style.width =
+        `${styreneCount / 3 * 100}%`;
+
+      document.querySelector('[data-score="meg"]').textContent =
+        `${megCount} / 3 answered`;
+      document.querySelector('[data-score="styrene"]').textContent =
+        `${styreneCount} / 3 answered`;
+
+      const percent = Math.round((megCount + styreneCount) / 6 * 100);
+      document.getElementById("headerProgress").textContent =
+        `${percent}% lesson complete`;
+    }
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(item =>
+          item.classList.remove("active")
+        );
+
+        document.querySelectorAll(".panel").forEach(panel =>
+          panel.classList.remove("active")
+        );
+
+        tab.classList.add("active");
+        document.getElementById(tab.dataset.panel).classList.add("active");
+      });
+    });
+
+    document.querySelectorAll(".question").forEach(question => {
+      const id = question.dataset.question;
+      const section = id.startsWith("meg") ? "meg" : "styrene";
+
+      question.querySelectorAll(".answer").forEach(answer => {
+        answer.addEventListener("click", () => {
+          const feedback = question.querySelector(".feedback");
+          const correct = answer.dataset.answer === "correct";
+
+          question.querySelectorAll(".answer").forEach(option =>
+            option.classList.remove(
+              "selected",
+              "correct-answer",
+              "wrong-answer"
+            )
+          );
+
+          answer.classList.add("selected");
+          answer.classList.add(
+            correct ? "correct-answer" : "wrong-answer"
+          );
+
+          if (correct) {
+            state[section].add(id);
+            feedback.textContent = "Correct.";
+            feedback.className = "feedback success";
+          } else {
+            state[section].delete(id);
+            feedback.textContent =
+              "Not quite. Review the lesson and try again.";
+            feedback.className = "feedback error";
+          }
+
+          saveState();
+          updateProgress();
+        });
+      });
+    });
+
+    document.querySelectorAll(".scenario-answer").forEach(answer => {
+      answer.addEventListener("click", () => {
+        const scenario = answer.closest(".scenario");
+        const feedback = scenario.querySelector(".scenario-feedback");
+
+        if (answer.dataset.result === "correct") {
+          feedback.textContent =
+            "Correct —*
+
