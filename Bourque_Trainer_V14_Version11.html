@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bourque Trainer V14</title>
+<style>
+:root{
+  --navy:#1f3b57;--blue:#2f6fed;--pale:#eef2f5;--border:#d4dde5;
+  --text:#263746;--muted:#607384;--green:#23734b;--red:#a63d3d;--gold:#d39700
+}
+*{box-sizing:border-box}
+body{font-family:Segoe UI,Arial,sans-serif;margin:0;background:var(--pale);color:var(--text)}
+header{background:var(--navy);color:#fff;padding:10px 16px}
+header h2{margin:0 0 8px}
+nav,.actions{display:flex;gap:8px;flex-wrap:wrap}
+button,.button{
+  border:0;border-radius:5px;padding:8px 12px;background:#e8eef4;
+  color:var(--navy);font-weight:700;cursor:pointer
+}
+nav button.active,.button.primary{background:var(--blue);color:#fff}
+button:disabled{opacity:.55;cursor:not-allowed}
+main{max-width:1600px;margin:auto;padding:16px}
+[hidden]{display:none!important}
+.panel,.card,.lesson-card,.lesson-content{
+  background:#fff;border:1px solid var(--border);border-radius:8px;
+  padding:14px;min-width:0
+}
+h1,h2,h3,h4{color:var(--navy)}
+h1{font-size:24px;margin:0 0 8px}
+h3{margin-top:0}
+p{line-height:1.5}
+.muted{color:var(--muted)}
+.dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.lesson-card h3{margin:0 0 6px}
+.status{font-size:12px;font-weight:700;color:var(--green)}
+.progress-wrap{height:10px;border-radius:8px;background:#dce5ec;overflow:hidden;margin:12px 0}
+.progress-bar{height:100%;width:0;background:var(--blue);transition:width .2s}
+.lesson-layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(230px,1fr);gap:14px}
+.lesson-content ul{padding-left:22px;line-height:1.6}
+.lesson-quiz{margin-top:14px;padding:12px;background:#f5f8fb;border-radius:7px}
+.lesson-quiz label,.assessment-question label{display:block;margin:8px 0;cursor:pointer}
+.feedback{min-height:22px;margin:8px 0;font-weight:700}
+.feedback.good{color:var(--green)}.feedback.bad{color:var(--red)}
+.scenario-box{padding:12px;border-left:4px solid var(--gold);background:#fff8df;border-radius:4px}
+.assessment-question{padding:12px 0;border-bottom:1px solid var(--border)}
+.map-card{margin:12px 0;padding:12px;border:1px solid #cbd6df;border-radius:8px;background:#f8fafc}
+.map-card h3,.map-card h4{margin:0 0 6px}
+.map-caption,.map-note{font-size:11px;color:#526779;line-height:1.4;margin:6px 0}
+.map-scroll{overflow-x:auto}
+.site-map{display:block;width:100%;min-width:340px;max-height:360px;margin:auto}
+.svg-label{font: bold 12px Segoe UI,Arial,sans-serif;fill:#263746}
+.svg-small{font: 10px Segoe UI,Arial,sans-serif;fill:#263746}
+.svg-title{font: bold 15px Segoe UI,Arial,sans-serif;fill:#1f3b57}
+.rail-line{stroke:#263746;stroke-width:3;fill:none}
+.rail-thin{stroke:#263746;stroke-width:2;fill:none}
+.fence-line{stroke:#777;stroke-width:2;stroke-dasharray:8 7;fill:none}
+.gate-red{fill:#e53e4e;stroke:#9f1d2b;stroke-width:1}
+.gate-blue{fill:#2877b8;stroke:#174c79;stroke-width:1}
+.derail{fill:#f4c928;stroke:#a77b00;stroke-width:1}
+.map-key{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;margin-top:8px}
+.key-item{display:flex;align-items:center;gap:5px}
+.key-swatch{width:14px;height:14px;border:1px solid #777}
+.key-swatch.red{background:#e53e4e}.key-swatch.blue{background:#2877b8}
+.key-swatch.yellow{background:#f4c928}
+.facing{
+  margin:10px 0;padding:10px;border:1px solid #cbd6df;border-radius:7px;background:#fff
+}
+.facing-direction{display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#526779}
+.facing-spots{display:flex;gap:5px;justify-content:space-between;margin:9px 0}
+.facing-spot{
+  flex:1;min-width:38px;padding:8px 3px;text-align:center;border:1px solid #aebbc6;
+  border-radius:5px;background:#f8fafc;font-size:10px;font-weight:800
+}
+.facing-spot.first{border:2px solid var(--gold);background:#fff2b3}
+#app{display:grid;grid-template-columns:minmax(170px,.8fr) minmax(170px,.8fr) minmax(0,2.4fr);gap:10px;padding:10px}
+.practice-panel{min-width:0}
+select{width:100%;margin:4px 0;padding:6px}
+table{width:100%;table-layout:fixed;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:4px;font-size:12px;overflow-wrap:anywhere}
+th:first-child,td:first-child{width:55px}
+tbody tr[draggable=true]{cursor:grab}
+tbody tr[draggable=true]:hover{background:#edf5ff}
+.drop-target.drag-over{background:#fff8cc}
+.orientation-reference{
+  position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:7px 18px;
+  padding:10px 12px;border-bottom:2px solid #c5d2dd;background:#fff;
+  box-shadow:0 2px 6px #18344d18;font-size:12px
+}
+.orientation-reference strong{color:var(--navy)}
+.track-map{margin:10px 0;padding:10px;border:1px solid #cbd6df;border-radius:7px;background:#f8fafc}
+.track-map h4{margin:0 0 5px}
+.track-note{font-size:11px;color:#526779;line-height:1.4}
+.track-note.warning{color:#855900;font-weight:700}
+.direction{display:flex;justify-content:space-between;margin:8px 0;color:#526779;font-size:10px;font-weight:800}
+.spot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px;max-height:40vh;overflow:auto;border-top:4px solid #526779;padding:8px 3px}
+.spot-item{text-align:center;min-width:0}
+.spot-label{display:block;min-height:16px;font-size:10px;font-weight:800;overflow-wrap:anywhere}
+.spot-box{
+  display:flex;min-height:56px;align-items:center;justify-content:center;padding:5px;
+  border:2px solid #8997a3;border-radius:4px;background:#f7f9fb;font-size:10px;text-align:center;overflow-wrap:anywhere
+}
+.spot-box.occupied{border-color:var(--blue);background:var(--blue);color:#fff}
+.spot-box.planned{outline:3px solid var(--gold);background:#fff2b3;color:#222;font-weight:800}
+#msg{margin-top:8px;font-size:12px;min-height:18px}
+.guided-banner{margin:10px;padding:12px;background:#fff8df;border:1px solid #ead28c;border-radius:7px}
+.guided-banner.done{background:#effaf3;border-color:#acd4b9}
+@media(max-width:850px){#app{grid-template-columns:1fr}.lesson-layout{grid-template-columns:1fr}.spot-grid{max-height:50vh}}
+@media(max-width:600px){.orientation-reference{position:static}.facing-spots{gap:3px}.facing-spot{font-size:9px}}
+</style>
+</head>
+<body>
+<header>
+  <h2>Bourque Trainer V14</h2>
+  <nav aria-label="Main navigation">
+    <button id="trainingNav" class="active" type="button" onclick="showScreen('training')">Training</button>
+    <button id="practiceNav" type="button" onclick="openPractice()">Practice</button>
+  </nav>
+</header>
+
+<main>
+<section id="trainingScreen">
+  <section id="dashboardView">
+    <div class="card">
+      <h1>Learn first. Practice second.</h1>
+      <p>Use the visible yard diagrams to find locations, understand the loading-house facings, and match the map to the program’s FROM and TO selections.</p>
+      <div class="progress-wrap"><div id="progressBar" class="progress-bar"></div></div>
+      <div id="progressText" class="muted"></div>
+    </div>
+    <h2>Training lessons</h2>
+    <div id="lessonCards" class="dashboard-grid"></div>
+    <div class="actions" style="margin-top:12px">
+      <button class="button primary" onclick="openGuided()">Start guided move</button>
+      <button class="button" onclick="openAssessment()">Take assessment</button>
+      <button class="button" onclick="openPractice()">Go to practice</button>
+    </div>
+  </section>
+
+  <section id="lessonView" hidden>
+    <button class="button" onclick="showDashboard()">← Training dashboard</button>
+    <div class="lesson-layout" style="margin-top:12px">
+      <article class="lesson-content">
+        <h1 id="lessonTitle"></h1>
+        <div id="lessonBody"></div>
+        <div class="lesson-quiz">
+          <h3 id="lessonQuestion"></h3>
+          <div id="lessonAnswers"></div>
+          <div id="lessonFeedback" class="feedback" aria-live="polite"></div>
+          <button id="checkLessonButton" class="button primary" onclick="checkLessonAnswer()">Check answer</button>
+          <button id="nextLessonButton" class="button" onclick="nextLesson()" hidden>Continue</button>
+        </div>
+      </article>
+      <aside class="lesson-content">
+        <h3>Location reminders</h3>
+        <ul>
+          <li>Use the yard diagram to identify the physical location.</li>
+          <li>Match its track name to the program selector.</li>
+          <li>Use WEST/EAST for loading-house facing.</li>
+          <li>Use the gate as a landmark, not as a spot number.</li>
+          <li>Check the approved site map if unsure.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <section id="guidedView" hidden>
+    <button class="button" onclick="showDashboard()">← Training dashboard</button>
+    <div class="card" style="margin-top:12px">
+      <h1>Guided move</h1>
+      <div class="scenario-box">Move the car in position 1 of <b>MEG 5 STORAGE</b> to <b>SP1</b> on <b>TK_1 MEG</b>. SP1 is the west-end position in the MEG loading-house facing.</div>
+      <div id="guidedMap"></div>
+      <p>Use the map and facing below, then confirm the selected FROM and TO tracks in the program.</p>
+      <div id="guidedStatus" class="feedback" aria-live="polite"></div>
+      <button class="button primary" onclick="launchGuidedMove()">Start guided move</button>
+    </div>
+  </section>
+
+  <section id="assessmentView" hidden>
+    <button class="button" onclick="showDashboard()">← Training dashboard</button>
+    <div class="card" style="margin-top:12px">
+      <h1>Knowledge check</h1>
+      <p>Answer all questions. A score of 3 out of 4 is a pass.</p>
+      <form id="assessmentForm"></form>
+      <div id="assessmentResult" class="feedback" aria-live="polite"></div>
+      <div class="actions">
+        <button type="button" class="button primary" onclick="gradeAssessment()">Submit answers</button>
+        <button type="button" class="button" onclick="resetAssessment()">Reset answers</button>
+        <button type="button" class="button" onclick="openPractice()">Go to practice</button>
+      </div>
+    </div>
+  </section>
+</section>
+
+<section id="practiceScreen" hidden>
+  <div id="guidedBanner" class="guided-banner" hidden>
+    <strong>Guided move:</strong> MEG 5 STORAGE position 1 → TK_1 MEG spot SP1.
+    <span id="guidedBannerStatus"></span>
+    <button class="button" onclick="exitGuided()">Exit guided move</button>
+  </div>
+  <div class="orientation-reference">
+    <span><strong>YARD MAP:</strong> shown in the visualization panel.</span>
+    <span><strong>GATE:</strong> red marker on the Styrene yard schematic.</span>
+    <span><strong>LOADING HOUSE:</strong> check WEST/EAST and spot labels.</span>
+  </div>
+  <div id="app">
+    <div class="panel practice-panel">
+      <h3>FROM</h3>
+      <select id="fromCat" aria-label="From category"></select>
+      <select id="fromLoc" aria-label="From track"></select>
+      <table><thead><tr><th>Pos</th><th>Car</th></tr></thead><tbody id="fromBody"></tbody></table>
+    </div>
+    <div class="panel practice-panel">
+      <h3>TO</h3>
+      <select id="toCat" aria-label="To category"></select>
+      <select id="toLoc" aria-label="To track"></select>
+      <table><thead><tr><th>Dest</th><th>Car</th></tr></thead><tbody id="toBody"></tbody></table>
+      <button onclick="executeMove()">Execute Move</button>
+      <button onclick="clearPlan()">Clear Plan</button>
+      <div id="msg" role="status" aria-live="polite"></div>
+    </div>
+    <div class="panel practice-panel">
+      <h3>Yard maps and selected track locations</h3>
+      <div id="viz"></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+const lessons=[
+  {
+    title:"1. Find the location in the program",
+    body:`<p>Start with the yard diagram to identify the physical yard and track. Then choose the matching category and track in the FROM or TO selectors. Compare the selected track name and spot labels with the map.</p>
+      <p>The diagrams below are included in this training page. They are simplified schematics, not to scale.</p>
+      <div id="lessonYardMaps"></div>`,
+    question:"What should you use to identify a physical track before selecting it in the program?",
+    answers:["The yard diagram, then verify the matching track name","Only the car ID","The first track in the selector"],correct:0
+  },
+  {
+    title:"2. MEG loading-house orientation",
+    body:`<p>The MEG loading-house reference shows SP1 at the west end of Track 1. Track 1 continues east through SP3, SP5, SP7, and SP9. Track 2 uses the even-numbered spots.</p>
+      <div id="megFacingLesson"></div>`,
+    question:"On MEG track 1, which spot is at the west end?",
+    answers:["SP9","SP5","SP1"],correct:2
+  },
+  {
+    title:"3. Styrene loading-house orientation",
+    body:`<p>The Styrene reference shows SP6 at the west end and SP1 at the east end. This facing is reversed from the MEG example.</p>
+      <div id="styFacingLesson"></div>`,
+    question:"In the illustrated Styrene loading house, where is SP1?",
+    answers:["At the east end","At the west end","In the center"],correct:0
+  },
+  {
+    title:"4. Confirm the location before moving",
+    body:`<p>Before planning a move, verify the FROM category and track, source position and car, TO category and track, and destination position.</p>
+      <p>The gate is a landmark on the Styrene yard drawing. Use the actual track layout on the diagram to identify locations; do not infer a storage track’s gate-side position from its number.</p>
+      <p>If orientation is unclear, stop and check the approved site map or procedure. This trainer is for practice and does not replace site instructions.</p>
+      <div id="locationCheckMaps"></div>`,
+    question:"If you are unsure where a storage track is in relation to the gate, what should you do?",
+    answers:["Assume position 1 is nearest the gate","Check the specific yard map or approved procedure","Choose the first open position"],correct:1
+  }
+];
+
+const assessmentQuestions=[
+  {question:"What should you use to identify a physical track before selecting it?",answers:["The yard diagram, then verify the matching track name","Only the car ID","The first listed track"],correct:0},
+  {question:"Which spot is at the west end of MEG loading track 1?",answers:["SP1","SP5","SP9"],correct:0},
+  {question:"Which spot is at the east end of the illustrated Styrene loading house?",answers:["SP6","SP3","SP1"],correct:2},
+  {question:"Does the gate alone tell you the position numbering of every storage track?",answers:["Yes, position 1 is always nearest","No, check the specific map or approved procedure","Yes, the first listed track is nearest"],correct:1}
+];
+
+const trackGroups={
+  "MEG LOADING":[
+    {name:"TK_1 MEG",spots:["SP9","SP7","SP5","SP3","SP1"]},
+    {name:"TK_2 MEG",spots:["SP10","SP8","SP6","SP4","SP2"]}
+  ],
+  "MEG STORAGE":[
+    {name:"MEG AL LEAD",capacity:15},{name:"INB 105 MEG",capacity:100},
+    {name:"MEG UPG STORAGE",capacity:100},{name:"MEG 1 BACK",capacity:28},
+    {name:"MEG 1 FRONT",capacity:12},{name:"MEG 1-A BACK",capacity:30},
+    {name:"MEG 1-A FRONT",capacity:3},{name:"MEG 1-C STORAGE",capacity:13},
+    {name:"MEG 2 BACK",capacity:28},{name:"MEG 2 FRONT",capacity:12},
+    {name:"MEG 3 STORAGE",capacity:48},{name:"MEG 3-A STORAGE",capacity:30},
+    {name:"MEG 4 STORAGE",capacity:50},{name:"MEG 5 STORAGE",capacity:50},
+    {name:"MEG 6 STORAGE",capacity:45},{name:"MEG 7 STORAGE",capacity:45},
+    {name:"OUT 105 MEG",capacity:100},{name:"UNK 105 MEG",capacity:100}
+  ],
+  "STYRENE LOADING":[
+    {name:"TK_5 STYRE",spots:["SP_6","SP_5","SP_4","SP_3","SP_2","SP_1"]},
+    {name:"TK_6 STYRE",spots:["SP_6","SP_5","SP_4","SP_3","SP_2","SP_1"]},
+    {name:"TK_7 STYRE",spots:["SP_6","SP_5","SP_4","SP_3","SP_2","SP_1"]},
+    {name:"TK_8 STYRE",spots:["SP_15","SP_16","SP_17","SP_18","SP_19"]},
+    {name:"TK_ESTIMAT",spots:["SP_E1","SP_E2","SP_E3","SP_E4","SP_E5","SP_E6","SP_E7","SP_E8","SP_E9","SP_E10","SP_E11","SP_E12","SP_E13","SP_E14","SP_E15","SP_E16","SP_E17","SP_E18"]}
+  ],
+  "STYRENE STORAGE":[
+    {name:"106 - STY VIRTUAL",capacity:100},{name:"CATALYST LOAD 1",capacity:4},
+    {name:"CAT LEAD",capacity:25},{name:"INB 106 STY",capacity:100},
+    {name:"LEAD TRACK",capacity:25},{name:"OUT 106 STY",capacity:100},
+    {name:"TRK 1 STY",capacity:45},{name:"TRK 1-A STY",capacity:40},
+    {name:"TRK 2 STY",capacity:38},{name:"TRK 3 STY",capacity:32},
+    {name:"TRK 3-A STY",capacity:35},{name:"TRK 4 STY/HOP",capacity:19},
+    {name:"TRK 5 FRONT",capacity:12},{name:"TRK 6 FRONT",capacity:12},
+    {name:"TRK 7 FRONT",capacity:14},{name:"TRK 8 FRONT",capacity:12},
+    {name:"UNK 106 STY",capacity:100},{name:"WYE NORTH",capacity:12},
+    {name:"WYE SOUTH",capacity:12}
+  ]
+};
+
+const tracks={};
+for(const [category,group] of Object.entries(trackGroups)){
+  for(const definition of group){
+    const spots=definition.spots||Array.from({length:definition.capacity},(_,i)=>String(i+1));
+    tracks[definition.name]={name:definition.name,category,capacity:definition.capacity||spots.length,
+      spots,cars:Object.fromEntries(spots.map(spot=>[spot,null]))};
+  }
+}
+let carNumber=1;
+for(const category of ["MEG STORAGE","STYRENE STORAGE"]){
+  for(const definition of trackGroups[category]){
+    const track=tracks[definition.name];
+    for(let i=0;i<Math.floor(track.capacity/2);i++)
+      track.cars[track.spots[i]]="TRAIN-"+String(carNumber++).padStart(4,"0");
+  }
+}
+
+let plan={};
+let currentLesson=0;
+const completedLessons=new Set();
+let guidedActive=false,guidedComplete=false;
+
+const fromCat=document.getElementById("fromCat"),toCat=document.getElementById("toCat");
+const fromLoc=document.getElementById("fromLoc"),toLoc=document.getElementById("toLoc");
+const fromBody=document.getElementById("fromBody"),toBody=document.getElementById("toBody");
+const viz=document.getElementById("viz"),msg=document.getElementById("msg");
+
+function megYardMap(){
+  return `<div class="map-card">
+    <h3>MEG Distribution Yard</h3>
+    <p class="map-caption">Simplified schematic based on the supplied MEG yard drawing. Schematic—not to scale.</p>
+    <div class="map-scroll">
+    <svg class="site-map" viewBox="0 0 520 390" role="img" aria-label="Simplified MEG distribution yard map with storage tracks, leads, wye, and main line">
+      <text x="260" y="22" text-anchor="middle" class="svg-title">MEG DISTRIBUTION YARD</text>
+      <path d="M75 340 L235 250 L320 250" class="rail-line"/>
+      <path d="M235 250 L235 80" class="rail-line"/>
+      <path d="M235 250 L235 340" class="rail-line"/>
+      <path d="M235 340 L190 370 M235 340 L280 370" class="rail-thin"/>
+      <text x="210" y="365" class="svg-small">S WYE</text>
+      <text x="280" y="365" class="svg-small">N WYE</text>
+      <text x="30" y="345" class="svg-small">Air Liquide lead</text>
+      <text x="185" y="385" class="svg-small">MAIN LINE</text>
+      <path d="M115 315 L115 110 M155 292 L155 110 M195 270 L195 110 M235 250 L235 110" class="rail-thin"/>
+      <text x="108" y="300" class="svg-label">7</text>
+      <text x="148" y="277" class="svg-label">6</text>
+      <text x="188" y="255" class="svg-label">5</text>
+      <text x="228" y="235" class="svg-label">4</text>
+      <path d="M235 180 L315 180 L315 70 M340 180 L340 70 M365 180 L365 70 M390 180 L390 70 M415 180 L415 70 M440 180 L440 70" class="rail-thin"/>
+      <text x="307" y="62" class="svg-small">6b</text><text x="332" y="62" class="svg-small">5b</text>
+      <text x="357" y="62" class="svg-small">4b</text><text x="382" y="62" class="svg-small">3b</text>
+      <text x="407" y="62" class="svg-small">2b</text><text x="432" y="62" class="svg-small">1b</text>
+      <path d="M270 255 L270 135 M290 245 L290 135" class="rail-thin"/>
+      <text x="263" y="275" class="svg-label">3</text><text x="283" y="265" class="svg-label">2</text>
+      <path d="M320 180 L320 220 M315 220 L315 246" class="rail-thin"/>
+      <text x="307" y="265" class="svg-label">1</text>
+      <polygon points="235,238 246,249 235,260 224,249" class="derail"/>
+      <polygon points="270,245 279,254 270,263 261,254" class="derail"/>
+      <polygon points="315,172 324,181 315,190 306,181" class="derail"/>
+      <path d="M87 322 L102 330 M105 312 L120 320" class="rail-thin"/>
+      <text x="55" y="300" class="svg-small">Lead</text>
+    </svg>
+    </div>
+    <div class="map-key"><span class="key-item"><i class="key-swatch yellow"></i>Derail (shown in source map)</span></div>
+  </div>`;
+}
+
+function styreneYardMap(){
+  return `<div class="map-card">
+    <h3>Styrene/Benzene Distribution Yard</h3>
+    <p class="map-caption">Simplified schematic based on the supplied yard drawing. The red marker identifies the emergency gate shown on that drawing. Schematic—not to scale.</p>
+    <div class="map-scroll">
+    <svg class="site-map" viewBox="0 0 440 500" role="img" aria-label="Simplified Styrene yard map showing fence, emergency gate, gates, lead, loading tracks, and main line">
+      <text x="220" y="22" text-anchor="middle" class="svg-title">STYRENE / BENZENE YARD</text>
+      <path d="M310 38 L310 410" class="fence-line"/>
+      <rect x="300" y="55" width="20" height="22" class="gate-red"/>
+      <text x="328" y="70" class="svg-small">Emergency gate</text>
+      <rect x="301" y="270" width="18" height="18" class="gate-blue"/>
+      <text x="328" y="283" class="svg-small">Gate</text>
+      <rect x="301" y="345" width="18" height="18" class="gate-blue"/>
+      <text x="328" y="358" class="svg-small">Gate</text>
+      <path d="M292 76 L292 385" class="rail-line"/>
+      <path d="M286 95 L270 118 L270 245 M280 95 L250 135 L250 245 M274 95 L230 152 L230 245" class="rail-thin"/>
+      <text x="215" y="220" class="svg-label">4</text>
+      <text x="237" y="220" class="svg-label">3</text>
+      <text x="258" y="220" class="svg-label">2</text>
+      <path d="M292 280 L270 300 L270 385 M292 290 L250 320 L250 385 M292 300 L230 340 L230 385" class="rail-thin"/>
+      <text x="215" y="370" class="svg-label">8</text>
+      <text x="237" y="370" class="svg-label">7</text>
+      <text x="258" y="370" class="svg-label">5</text>
+      <path d="M292 385 C292 420 268 440 240 450 L60 450" class="rail-line"/>
+      <path d="M292 385 C292 420 315 440 345 450 L420 450" class="rail-line"/>
+      <text x="190" y="470" class="svg-label">S WYE</text>
+      <text x="330" y="470" class="svg-label">N WYE</text>
+      <path d="M60 485 L420 485" class="rail-line"/>
+      <text x="64" y="498" class="svg-small">MAIN LINE</text>
+      <polygon points="292,105 302,115 292,125 282,115" class="derail"/>
+      <polygon points="270,295 280,305 270,315 260,305" class="derail"/>
+      <polygon points="250,330 260,340 250,350 240,340" class="derail"/>
+      <polygon points="230,365 240,375 230,385 220,375" class="derail"/>
+      <text x="88" y="90" class="svg-small">Lead</text>
+      <path d="M80 105 L180 105" class="rail-thin"/>
+      <text x="82" y="125" class="svg-small">Track positions shown in the site map</text>
+    </svg>
+    </div>
+    <div class="map-key">
+      <span class="key-item"><i class="key-swatch red"></i>Emergency gate</span>
+      <span class="key-item"><i class="key-swatch blue"></i>Gate</span>
+      <span class="key-item"><i class="key-swatch yellow"></i>Derail</span>
+    </div>
+  </div>`;
+}
+
+function facingMap(type){
+  if(type==="meg"){
+    return `<div class="facing">
+      <h4>MEG loading-house facing</h4>
+      <div class="facing-direction"><span>WEST</span><span>WEST → EAST</span><span>EAST</span></div>
+      <div class="facing-spots">
+        <span class="facing-spot first">SP1</span><span class="facing-spot">SP3</span>
+        <span class="facing-spot">SP5</span><span class="facing-spot">SP7</span><span class="facing-spot">SP9</span>
+      </div>
+      <div class="facing-spots">
+        <span class="facing-spot first">SP2</span><span class="facing-spot">SP4</span>
+        <span class="facing-spot">SP6</span><span class="facing-spot">SP8</span><span class="facing-spot">SP10</span>
+      </div>
+      <p class="map-note">Track 1 uses odd-numbered spots; Track 2 uses even-numbered spots. Confirm the selected track and spot in the program.</p>
+    </div>`;
+  }
+  return `<div class="facing">
+    <h4>Styrene loading-house facing</h4>
+    <div class="facing-direction"><span>WEST</span><span>WEST → EAST</span><span>EAST</span></div>
+    <div class="facing-spots">
+      <span class="facing-spot first">SP6</span><span class="facing-spot">SP5</span>
+      <span class="facing-spot">SP4</span><span class="facing-spot">SP3</span>
+      <span class="facing-spot">SP2</span><span class="facing-spot">SP1</span>
+    </div>
+    <p class="map-note">The supplied reference shows SP6 at west and SP1 at east.</p>
+  </div>`;
+}
+
+function showScreen(screen){
+  document.getElementById("trainingScreen").hidden=screen!=="training";
+  document.getElementById("practiceScreen").hidden=screen!=="practice";
+  document.getElementById("trainingNav").classList.toggle("active",screen==="training");
+  document.getElementById("practiceNav").classList.toggle("active",screen==="practice");
+}
+function showTrainingView(view){
+  for(const id of ["dashboardView","lessonView","guidedView","assessmentView"])
+    document.getElementById(id).hidden=id!==view;
+  showScreen("training");
+}
+function showDashboard(){renderDashboard();showTrainingView("dashboardView")}
+function renderDashboard(){
+  const container=document.getElementById("lessonCards");
+  container.replaceChildren();
+  const descriptions=[
+    "Locate the yard and track on the diagrams, then find it in the selectors.",
+    "Read MEG loading-house positions from west to east.",
+    "Read Styrene loading-house positions from west to east.",
+    "Check the selected location against the visible yard references."
+  ];
+  lessons.forEach((lesson,index)=>{
+    const card=document.createElement("article");card.className="lesson-card";
+    const title=document.createElement("h3");title.textContent=lesson.title;
+    const desc=document.createElement("p");desc.textContent=descriptions[index];
+    const status=document.createElement("div");status.className="status";
+    status.textContent=completedLessons.has(index)?"Completed":"Not completed";
+    const button=document.createElement("button");button.className="button";
+    button.textContent=completedLessons.has(index)?"Review lesson":"Start lesson";
+    button.onclick=()=>openLesson(index);
+    card.append(title,desc,status,button);container.appendChild(card);
+  });
+  document.getElementById("progressBar").style.width=`${completedLessons.size/lessons.length*100}%`;
+  document.getElementById("progressText").textContent=`${completedLessons.size} of ${lessons.length} lessons completed`;
+}
+function openLesson(index){
+  currentLesson=index;
+  document.getElementById("lessonTitle").textContent=lessons[index].title;
+  document.getElementById("lessonBody").innerHTML=lessons[index].body;
+  document.getElementById("lessonQuestion").textContent=lessons[index].question;
+  document.getElementById("lessonFeedback").textContent="";
+  document.getElementById("lessonFeedback").className="feedback";
+  document.getElementById("checkLessonButton").hidden=false;
+  document.getElementById("nextLessonButton").hidden=true;
+  const answers=document.getElementById("lessonAnswers");answers.replaceChildren();
+  lessons[index].answers.forEach((answer,i)=>{
+    const label=document.createElement("label"),radio=document.createElement("input");
+    radio.type="radio";radio.name="lessonAnswer";radio.value=String(i);
+    label.append(radio,document.createTextNode(" "+answer));answers.appendChild(label);
+  });
+  const maps=document.getElementById("lessonYardMaps");
+  if(maps)maps.innerHTML=styreneYardMap()+megYardMap();
+  const meg=document.getElementById("megFacingLesson");if(meg)meg.innerHTML=facingMap("meg");
+  const sty=document.getElementById("styFacingLesson");if(sty)sty.innerHTML=facingMap("sty");
+  const checks=document.getElementById("locationCheckMaps");
+  if(checks)checks.innerHTML=styreneYardMap()+megYardMap();
+  showTrainingView("lessonView");
+}
+function checkLessonAnswer(){
+  const selected=document.querySelector('input[name="lessonAnswer"]:checked');
+  const feedback=document.getElementById("lessonFeedback");
+  if(!selected){feedback.textContent="Choose an answer before continuing.";feedback.className="feedback bad";return}
+  if(Number(selected.value)===lessons[currentLesson].correct){
+    completedLessons.add(currentLesson);feedback.textContent="Correct. Lesson completed.";
+    feedback.className="feedback good";document.getElementById("checkLessonButton").hidden=true;
+    document.getElementById("nextLessonButton").hidden=false;
+  }else{feedback.textContent="Not quite. Review the diagram and try again.";feedback.className="feedback bad"}
+}
+function nextLesson(){currentLesson<lessons.length-1?openLesson(currentLesson+1):showDashboard()}
+function openGuided(){
+  document.getElementById("guidedStatus").textContent=guidedComplete?
+    "Guided move completed. You can repeat it or go to practice.":"Review the diagrams, then confirm the selected tracks and spots.";
+  document.getElementById("guidedMap").innerHTML=megYardMap()+facingMap("meg");
+  showTrainingView("guidedView");
+}
+function openPractice(){guidedActive=false;document.getElementById("guidedBanner").hidden=true;showScreen("practice")}
+function setTrackSelection(cat,loc,category,name){cat.value=category;loadOpts(cat,loc);loc.value=name}
+function launchGuidedMove(){
+  guidedActive=true;guidedComplete=false;plan={};
+  setTrackSelection(fromCat,fromLoc,"MEG STORAGE","MEG 5 STORAGE");
+  setTrackSelection(toCat,toLoc,"MEG LOADING","TK_1 MEG");
+  document.getElementById("guidedBanner").hidden=false;
+  document.getElementById("guidedBanner").classList.remove("done");
+  document.getElementById("guidedBannerStatus").textContent="";
+  render();showScreen("practice");showMessage("Guided move: confirm tracks, then drag position 1 to SP1.");
+}
+function exitGuided(){guidedActive=false;plan={};document.getElementById("guidedBanner").hidden=true;render()}
+function openAssessment(){renderAssessment();showTrainingView("assessmentView")}
+function renderAssessment(){
+  const form=document.getElementById("assessmentForm");form.replaceChildren();
+  document.getElementById("assessmentResult").textContent="";
+  assessmentQuestions.forEach((q,qi)=>{
+    const field=document.createElement("fieldset");field.className="assessment-question";
+    const legend=document.createElement("legend");legend.textContent=`${qi+1}. ${q.question}`;field.appendChild(legend);
+    q.answers.forEach((answer,ai)=>{
+      const label=document.createElement("label"),radio=document.createElement("input");
+      radio.type="radio";radio.name=`assessment-${qi}`;radio.value=String(ai);
+      label.append(radio,document.createTextNode(" "+answer));field.appendChild(label);
+    });
+    form.appendChild(field);
+  });
+}
+function gradeAssessment(){
+  let score=0,unanswered=false;
+  assessmentQuestions.forEach((q,i)=>{
+    const answer=document.querySelector(`input[name="assessment-${i}"]:checked`);
+    if(!answer)unanswered=true;else if(Number(answer.value)===q.correct)score++;
+  });
+  const result=document.getElementById("assessmentResult");
+  if(unanswered){result.textContent="Please answer every question.";result.className="feedback bad"}
+  else if(score>=3){result.textContent=`Passed: ${score} out of ${assessmentQuestions.length}.`;result.className="feedback good"}
+  else{result.textContent=`Score: ${score} out of ${assessmentQuestions.length}. Review and try again.`;result.className="feedback bad"}
+}
+function resetAssessment(){document.getElementById("assessmentForm").reset();document.getElementById("assessmentResult").textContent=""}
+function loadOpts(cat,loc){
+  loc.innerHTML="";
+  for(const definition of trackGroups[cat.value])loc.add(new Option(definition.name,definition.name));
+}
+function showMessage(text){msg.textContent=text}
+function clearPlan(){plan={};render();showMessage("Plan cleared.")}
+function sourcePlanned(name,spot){return Object.values(plan).some(m=>m.sourceTrack===name&&m.sourceSpot===spot)}
+function render(){renderFrom();renderTo();draw()}
+function renderFrom(){
+  fromBody.innerHTML="";const track=tracks[fromLoc.value];
+  for(const spot of track.spots){
+    const car=track.cars[spot];if(!car||sourcePlanned(track.name,spot))continue;
+    const row=document.createElement("tr");row.draggable=true;
+    const p=document.createElement("td"),c=document.createElement("td");p.textContent=spot;c.textContent=car;
+    row.append(p,c);row.addEventListener("dragstart",e=>{
+      e.dataTransfer.setData("text/plain",JSON.stringify({sourceTrack:track.name,sourceSpot:spot,car}));
+      e.dataTransfer.effectAllowed="move";
+    });fromBody.appendChild(row);
+  }
+}
+function renderTo(){
+  toBody.innerHTML="";const track=tracks[toLoc.value];
+  for(const spot of track.spots){
+    const move=plan[spot],car=move?move.car:track.cars[spot];
+    const row=document.createElement("tr"),p=document.createElement("td"),c=document.createElement("td");
+    p.textContent=spot;c.textContent=car||"";row.append(p,c);
+    if(move)row.classList.add("planned");
+    if(!car){
+      row.classList.add("drop-target");
+      row.addEventListener("dragover",e=>{e.preventDefault();row.classList.add("drag-over")});
+      row.addEventListener("dragleave",()=>row.classList.remove("drag-over"));
+      row.addEventListener("drop",e=>{e.preventDefault();row.classList.remove("drag-over");planMove(e,track.name,spot)});
+    }
+    toBody.appendChild(row);
+  }
+}
+function planMove(event,destinationTrack,destinationSpot){
+  let dragged;
+  try{dragged=JSON.parse(event.dataTransfer.getData("text/plain"))}
+  catch{showMessage("Could not read the dragged car.");return}
+  const source=tracks[dragged.sourceTrack],destination=tracks[destinationTrack];
+  if(!source||!destination)return;
+  if(guidedActive&&(dragged.sourceTrack!=="MEG 5 STORAGE"||dragged.sourceSpot!=="1"||destinationTrack!=="TK_1 MEG"||destinationSpot!=="SP1")){
+    showMessage("Use MEG 5 STORAGE position 1 and destination SP1 on TK_1 MEG.");return;
+  }
+  if(source.cars[dragged.sourceSpot]!==dragged.car){showMessage("That car is no longer at the selected source spot.");return}
+  if(destination.cars[destinationSpot]||plan[destinationSpot]){showMessage("That destination spot is occupied or already planned.");return}
+  if(sourcePlanned(dragged.sourceTrack,dragged.sourceSpot)){showMessage("That car is already in the plan.");return}
+  plan[destinationSpot]={car:dragged.car,sourceTrack:dragged.sourceTrack,sourceSpot:dragged.sourceSpot};
+  render();showMessage(`Planned ${dragged.car} for ${destinationTrack}, spot ${destinationSpot}.`);
+}
+function executeMove(){
+  const destination=tracks[toLoc.value],moves=Object.entries(plan);
+  if(!moves.length){showMessage("Drag a car to an open destination spot first.");return}
+  for(const [spot,move] of moves){
+    const source=tracks[move.sourceTrack];
+    if(!source||source.cars[move.sourceSpot]!==move.car||destination.cars[spot]){
+      showMessage("The plan could not be completed because a spot has changed.");return
+    }
+  }
+  for(const [,move] of moves)tracks[move.sourceTrack].cars[move.sourceSpot]=null;
+  for(const [spot,move] of moves)destination.cars[spot]=move.car;
+  plan={};render();
+  if(guidedActive){
+    guidedComplete=true;document.getElementById("guidedBanner").classList.add("done");
+    document.getElementById("guidedBannerStatus").textContent=" Guided move complete. Check SP1.";
+    showMessage("Guided move complete. The car is at SP1 on TK_1 MEG.");
+  }else showMessage(`Executed ${moves.length} move${moves.length===1?"":"s"}.`);
+}
+function visualOrder(track){
+  const spots=[...track.spots];
+  if(track.category==="MEG LOADING")
+    return spots.sort((a,b)=>Number(a.replace(/\D/g,""))-Number(b.replace(/\D/g,"")));
+  if(track.category==="STYRENE LOADING"&&spots.length===6&&spots.includes("SP_6")&&spots.includes("SP_1"))
+    return spots.sort((a,b)=>Number(b.match(/\d+/)?.[0]||0)-Number(a.match(/\d+/)?.[0]||0));
+  return spots;
+}
+function drawTrack(container,track,isDestination){
+  const section=document.createElement("section");section.className="track-map";
+  const title=document.createElement("h4");title.textContent=track.name;section.appendChild(title);
+  const note=document.createElement("p");note.className="track-note";
+  let spots;
+  if(track.category.includes("STORAGE")){
+    note.textContent=`Storage track · Capacity ${track.capacity}. Find this track on the yard map above; the schematic does not infer a gate-side spot number.`;
+    spots=track.spots;
+  }else{
+    const styreneMapped=track.category==="STYRENE LOADING"&&track.spots.length===6&&track.spots.includes("SP_6")&&track.spots.includes("SP_1");
+    if(track.category==="MEG LOADING"||styreneMapped)
+      note.textContent="Loading-house spots displayed in the confirmed west-to-east order.";
+    else{
+      note.classList.add("warning");
+      note.textContent="This track’s spot-to-end facing is not confirmed by the supplied reference. Verify before using.";
+    }
+    spots=visualOrder(track);
+    const direction=document.createElement("div");direction.className="direction";
+    direction.innerHTML="<span>WEST END</span><span>WEST → EAST</span><span>EAST END</span>";
+    section.append(note,direction);
+  }
+  if(track.category.includes("STORAGE"))section.appendChild(note);
+  const grid=document.createElement("div");grid.className="spot-grid";
+  for(const spot of spots){
+    const move=isDestination?plan[spot]:null,car=move?move.car:track.cars[spot];
+    const item=document.createElement("div");item.className="spot-item";
+    const label=document.createElement("span");label.className="spot-label";label.textContent=spot;
+    const box=document.createElement("div");box.className="spot-box "+(car?"occupied":"");
+    if(move)box.classList.add("planned");box.textContent=car||"Empty";if(car)box.title=car;
+    item.append(label,box);grid.appendChild(item);
+  }
+  section.appendChild(grid);container.appendChild(section);
+}
+function draw(){
+  viz.innerHTML=styreneYardMap()+megYardMap();
+  const headings=document.createElement("h3");headings.textContent="Selected tracks";viz.appendChild(headings);
+  const fromHead=document.createElement("h4");fromHead.textContent="FROM — "+fromLoc.value;viz.appendChild(fromHead);
+  drawTrack(viz,tracks[fromLoc.value],false);
+  const toHead=document.createElement("h4");toHead.textContent="TO — "+toLoc.value;viz.appendChild(toHead);
+  drawTrack(viz,tracks[toLoc.value],true);
+}
+fromCat.addEventListener("change",()=>{loadOpts(fromCat,fromLoc);plan={};render()});
+toCat.addEventListener("change",()=>{loadOpts(toCat,toLoc);plan={};render()});
+fromLoc.addEventListener("change",()=>{plan={};render()});
+toLoc.addEventListener("change",()=>{plan={};render()});
+
+function init(){
+  for(const category of Object.keys(trackGroups)){
+    fromCat.add(new Option(category,category));toCat.add(new Option(category,category));
+  }
+  fromCat.value="MEG STORAGE";toCat.value="STYRENE STORAGE";
+  loadOpts(fromCat,fromLoc);loadOpts(toCat,toLoc);
+  fromLoc.value="MEG AL LEAD";toLoc.value="106 - STY VIRTUAL";
+  document.getElementById("lessonYardMaps").innerHTML=styreneYardMap()+megYardMap();
+  document.getElementById("megFacingLesson").innerHTML=facingMap("meg");
+  document.getElementById("styFacingLesson").innerHTML=facingMap("sty");
+  document.getElementById("locationCheckMaps").innerHTML=styreneYardMap()+megYardMap();
+  document.getElementById("guidedMap").innerHTML=megYardMap()+facingMap("meg");
+  renderDashboard();render();showScreen("training");
+}
+init();
+</script>
+</body>
+</html>
